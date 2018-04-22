@@ -1,0 +1,10 @@
+[
+  {
+    "uid": "myapp-api-1",
+    "append": true,
+    "script": "main.js",
+    "sourceDir": "/path/to/ropository/dist",
+    "logFile": "/var/log/myapp/api.log",
+    "errFile": "/var/log/myapp/api-errors.log"
+  }
+]

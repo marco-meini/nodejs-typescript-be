@@ -1,0 +1,10 @@
+[
+  {
+    "uid": "myapp-fileserver-1",
+    "append": true,
+    "script": "fs-main.js",
+    "sourceDir": "/path/to/ropository/dist",
+    "logFile": "/var/log/myapp/fileserver.log",
+    "errFile": "/var/log/myapp/fileserver-errors.log"
+  }
+]
