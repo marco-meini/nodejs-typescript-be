@@ -1,29 +1,21 @@
-import * as bcrypt from 'bcrypt';
-import * as Promise from 'bluebird';
-
+import * as bcrypt from "bcrypt";
 
 export class Crypt {
-  static hash(plain: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      bcrypt.hash(plain, 10, (error, hashed) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(hashed);
-        }
-      });
-    });
+  static async hash(plain: string): Promise<string> {
+    try {
+      let hashed = await bcrypt.hash(plain, 10);
+      return Promise.resolve(hashed);
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 
-  static compare(plain: string, hash: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      bcrypt.compare(plain, hash)
-        .then((res: boolean) => {
-          resolve(res);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    });
+  static async compare(plain: string, hash: string): Promise<boolean> {
+    try {
+      let res = await bcrypt.compare(plain, hash);
+      return Promise.resolve(res);
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 }

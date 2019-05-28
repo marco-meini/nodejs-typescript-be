@@ -7,7 +7,7 @@ Nodejs + Express typescript backend template
 ### Environment configuration:
 In *config*, create a `config.json` and fill with your parameters:
 
-```
+```json
 {
   "logLevel": 4,
   "db": {
@@ -23,21 +23,30 @@ In *config*, create a `config.json` and fill with your parameters:
       "operatorsAliases": false
     }
   },
-  "accessCookieName": "myapp-token",
+  "mongoDb": {
+    "host": "[ip-address]",
+    "port": 27017,
+    "db": "[database-name]",
+    "auth": {
+      "user": "[database-username]",
+      "password": "[database-password]"
+    }
+  },
+  "mongoDb": MongoDbConfig,
+  "sessionCookieName": "my-site-sid",
+  "sessionHeaderName": "my-site-sid",
+  "sessionExpiration": {
+    "short": 7890000,
+    "long": 31536000
+  },
   "apiRoot": "/api/v1",
-  "fsApiRoot": "/file/v1",
   "fileServerRootPath": "/path/to/files",
   "fileServerPrivateFolder": "private",
   "fileServerPublicFolder": "public",
   "sparkpost": {
     "api": "sparkpost-api"
   },
-  "jwtExpiration": 86400,
-  "redisOptions": {
-    "host": "RedisHost",
-    "port": 6379,
-    "password": null
-  }
+  "jwtExpiration": 86400
 }
 ```
 #### DATABASE
@@ -55,7 +64,7 @@ _logLevel_ possible values:
 
 #### SESSION
 
-Using JWT session it's necessary to install redis to manage a whitelist, only in this case it's also necessary to complie this configurations:
+Using JWT session it's necessary to install mongoDb to manage a whitelist, only in this case it's also necessary to complie this configurations:
 
-* jwtExpiration: tokens expiration in seconds
+* sessionExpiration: tokens expirations in seconds
 * redisOptions: redis connection configurations

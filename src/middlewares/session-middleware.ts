@@ -1,62 +1,151 @@
-import { UserAliases } from '../model/user-model';
-import { NextFunction } from 'express';
-import { Request, Response } from 'express-serve-static-core';
-import * as express from 'express';
-import * as moment from 'moment';
-import { Config } from '../config';
-import { SessionManager, SessionData } from '../lib/session-manager';
-import { Sequelize } from 'sequelize';
-import { HttpResponseStatus } from '../environment';
+import * as express from "express";
+import { NextFunction } from "express";
+import { Request, Response } from "express-serve-static-core";
+import * as moment from "moment";
+import { SessionManager, SessionPayload } from "../lib/session-manager";
+import { HttpResponseStatus } from "../enums";
+import { MongoClienManager } from "../lib/mongo-client-manager";
+
+declare global {
+  namespace Express {
+    interface Request {
+      token: string;
+      tokenSource: TokenSources;
+    }
+  }
+}
 
 export interface SessionRequest extends Request {
-  session?: SessionData;
-  token: string;
+  session?: SessionPayload;
+}
+
+export enum TokenSources {
+  HEADER = "HEADER",
+  COOKIE = "COOKIE"
 }
 
 export class SessionMiddleware {
   public sessionManager: SessionManager;
-  constructor(private connection: Sequelize, private config: Config) {
-    this.sessionManager = new SessionManager(this.connection, this.config);
+  constructor(private sessionCookieName: string, private sessionHeaderName: string, mongoDbMan: MongoClienManager, sessionExpiration: { short: number; long: number }) {
+    this.sessionManager = new SessionManager(mongoDbMan, sessionExpiration);
+  }
+
+  getToken(request: SessionRequest) {
+    let cookieToken: string = request.cookies && request.cookies[this.sessionCookieName];
+    let headerToken: string = request.header(this.sessionHeaderName) as string;
+    if (headerToken) {
+      request.tokenSource = TokenSources.HEADER;
+      return headerToken;
+    } else if (cookieToken) {
+      request.tokenSource = TokenSources.COOKIE;
+      return cookieToken;
+    }
+    return "";
+  }
+
+  updateResponseToken(request: SessionRequest, response: Response, newToken: string, persistent: boolean) {
+    let options: express.CookieOptions = {};
+    if (request.tokenSource === TokenSources.COOKIE) {
+      if (persistent)
+        options = {
+          expires: moment()
+            .add(1, "y")
+            .toDate()
+        };
+      response.cookie(this.sessionCookieName, newToken, options);
+    }
+    if (request.tokenSource === TokenSources.HEADER) {
+      response.setHeader(this.sessionHeaderName, newToken);
+    }
   }
 
   checkAuthentication(): express.RequestHandler {
-    return (request: SessionRequest, response: Response, next: NextFunction) => {
-      let token: string = request.cookies[this.config.accessCookieName];
-      if (token) {
-        this.sessionManager.get(token)
-          .then((data: SessionData) => {
-            request.session = data;
-            request.token = token;
-            next();
-          })
-          .catch((error) => {
-            response.sendStatus(HttpResponseStatus.NOT_AUTHENTICATED);
-          });
-      } else { 
+    return async (request: SessionRequest, response: Response, next: NextFunction) => {
+      try {
+        let token: string = this.getToken(request);
+        if (token) {
+          let sessionData: SessionPayload = await this.sessionManager.get(token);
+          let newSession = await this.sessionManager.checkRefresh(token);
+          if (newSession) {
+            sessionData = newSession;
+            let newToken = await this.sessionManager.refreshToken(token, newSession);
+            if (newToken !== token) {
+              token = newToken;
+              this.updateResponseToken(request, response, newToken, sessionData.persistent);
+            }
+          }
+          request.session = sessionData;
+          request.token = token;
+          next();
+        } else {
+          response.sendStatus(HttpResponseStatus.NOT_AUTHENTICATED);
+        }
+      } catch (e) {
         response.sendStatus(HttpResponseStatus.NOT_AUTHENTICATED);
       }
     };
   }
 
   checkPermission(permission: number): express.RequestHandler {
-    return (request: SessionRequest, response: Response, next: NextFunction) => {
-      let token: string = request.cookies[this.config.accessCookieName];
-      if (token) {
-        this.sessionManager.get(token)
-          .then((data: SessionData) => {
-            let _session: SessionData = data;
-            if (_session.user.grants.indexOf(permission) < 0) {
-              response.sendStatus(HttpResponseStatus.NOT_AUTHORIZED);
-              return;
+    return async (request: SessionRequest, response: Response, next: NextFunction) => {
+      try {
+        let token: string = this.getToken(request);
+        if (token) {
+          let sessionData: SessionPayload = await this.sessionManager.get(token);
+          let newSession = await this.sessionManager.checkRefresh(token);
+          if (newSession) {
+            sessionData = newSession;
+            let newToken = await this.sessionManager.refreshToken(token, newSession);
+            if (newToken !== token) {
+              token = newToken;
+              this.updateResponseToken(request, response, newToken, sessionData.persistent);
             }
-            request.session = _session;
+          }
+          if (sessionData!.grants.indexOf(permission) < 0) {
+            response.sendStatus(HttpResponseStatus.NOT_AUTHORIZED);
+          } else {
+            request.session = sessionData;
             request.token = token;
             next();
-          })
-          .catch((error) => {
-            response.sendStatus(HttpResponseStatus.NOT_AUTHENTICATED);
-          });
-      } else {
+          }
+        } else {
+          response.sendStatus(HttpResponseStatus.NOT_AUTHENTICATED);
+        }
+      } catch (e) {
+        response.sendStatus(HttpResponseStatus.NOT_AUTHENTICATED);
+      }
+    };
+  }
+
+  checkAtLeastOnePermission(permissions: number[]): express.RequestHandler {
+    return async (request: SessionRequest, response: Response, next: NextFunction) => {
+      try {
+        let token: string = this.getToken(request);
+        let sessionData: SessionPayload = await this.sessionManager.get(token);
+        let newSession = await this.sessionManager.checkRefresh(token);
+        if (newSession) {
+          sessionData = newSession;
+          let newToken = await this.sessionManager.refreshToken(token, newSession);
+          if (newToken !== token) {
+            token = newToken;
+            this.updateResponseToken(request, response, newToken, sessionData.persistent);
+          }
+        }
+        let authorized: boolean = false;
+        permissions.forEach(permission => {
+          if (sessionData!.grants.indexOf(permission) >= 0) {
+            authorized = true;
+            return;
+          }
+        });
+        if (!authorized) {
+          response.sendStatus(HttpResponseStatus.NOT_AUTHORIZED);
+        } else {
+          request.session = sessionData;
+          request.token = token;
+          next();
+        }
+      } catch (e) {
         response.sendStatus(HttpResponseStatus.NOT_AUTHENTICATED);
       }
     };

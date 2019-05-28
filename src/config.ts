@@ -1,5 +1,5 @@
-import * as Sequelize from 'sequelize';
-import { ClientOpts } from 'redis';
+import * as Sequelize from "sequelize";
+import { MongoDbConfig } from "./lib/mongo-client-manager";
 
 export interface DbConfig {
   database: string;
@@ -12,19 +12,23 @@ export interface Sparkpost {
   api: string;
 }
 
+export interface SessionExpiration {
+  short: number;
+  long: number;
+}
+
 export interface Config {
   // common properties
   db: DbConfig;
-  redisOptions?: ClientOpts;
-  accessCookieName: string;
+  mongoDb: MongoDbConfig;
+  sessionCookieName: string;
+  sessionHeaderName: string;
   logLevel: number;
-  jwtExpiration?: number;
+  sessionExpiration: SessionExpiration;
   // api properties
   apiRoot: string;
-  applicationHeader: string;
   sparkpost: Sparkpost;
   // file server properties
-  fsApiRoot: string;
   fileServerRootPath: string;
   fileServerPrivateFolder: string;
   fileServerPublicFolder: string;
