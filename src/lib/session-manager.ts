@@ -2,7 +2,7 @@ import * as jwt from "jsonwebtoken";
 import { v1 } from "uuid";
 import * as _ from "lodash";
 import { MongoClienManager } from "./mongo-client-manager";
-import moment = require("moment");
+import * as moment from 'moment';
 import { ObjectId } from "mongodb";
 
 export interface SessionPayload {

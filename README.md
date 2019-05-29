@@ -32,7 +32,6 @@ In *config*, create a `config.json` and fill with your parameters:
       "password": "[database-password]"
     }
   },
-  "mongoDb": MongoDbConfig,
   "sessionCookieName": "my-site-sid",
   "sessionHeaderName": "my-site-sid",
   "sessionExpiration": {
