@@ -1,36 +1,60 @@
-import * as Sparkpost from "sparkpost";
-import { Recipient } from "sparkpost";
+import * as mailgun from "mailgun-js";
+import { Mailgun } from "mailgun-js";
 import * as mime from "mime-types";
 import * as fs from "fs";
 import * as path from "path";
 
+export interface MailContent {
+  from: string;
+  subject: string;
+  html: string;
+}
+
 export class Mail {
-  private content: Sparkpost.InlineContent;
+  private content: MailContent;
+  private attachments: Array<{
+    data: string | Buffer | NodeJS.ReadWriteStream;
+    filename?: string;
+    knownLength?: number;
+    contentType?: string;
+  }>;
+  private inlineImages: Array<{
+    data: string | Buffer | NodeJS.ReadWriteStream;
+    filename?: string;
+    knownLength?: number;
+    contentType?: string;
+  }>;
 
   constructor(from: string, subject: string, html: string) {
     this.content = {
       from: from,
       subject: subject,
-      html: html,
-      attachments: [],
-      inline_images: []
+      html: html
     };
   }
 
   public addAttachment(filePath: string) {
-    this.content.attachments!.push({
-      type: mime.contentType(filePath).toString(),
-      name: path.basename(filePath),
-      data: fs.readFileSync(filePath).toString("base64")
+    this.attachments.push({
+      contentType: mime.contentType(filePath).toString(),
+      filename: path.basename(filePath),
+      data: fs.readFileSync(filePath)
     });
   }
 
   public addInlineImage(filePath: string, cidName: string) {
-    this.content.inline_images!.push({
-      type: mime.contentType(filePath).toString(),
-      name: cidName,
-      data: fs.readFileSync(filePath).toString("base64")
+    this.inlineImages.push({
+      contentType: mime.contentType(filePath).toString(),
+      filename: cidName,
+      data: fs.readFileSync(filePath)
     });
+  }
+
+  public getAttachments(mailgun: Mailgun) {
+    return this.attachments.map(item => new mailgun.Attachment(item));
+  }
+
+  public getInlineImages(mailgun: Mailgun) {
+    return this.inlineImages.map(item => new mailgun.Attachment(item));
   }
 
   public getContent() {
@@ -46,53 +70,27 @@ export interface SendResult {
   };
 }
 
-export interface EventsResult {
-  results: Array<Sparkpost.MessageEvent>;
-}
-
 export class Mailer {
-  private client: Sparkpost;
-  constructor(sparkpostApi: string) {
-    this.client = new Sparkpost(sparkpostApi);
+  private client: Mailgun;
+  constructor(options: { apiKey: string, domain: string}) {
+    this.client = new mailgun({
+      apiKey: options.apiKey,
+      domain: options.domain
+    });
   }
 
   public async send(
     mail: Mail,
     recipients: Array<string>
-  ): Promise<{
-    total_rejected_recipients: number;
-    total_accepted_recipients: number;
-    id: string;
-  }> {
+  ): Promise<{ id: string; message: string; }> {
     try {
-      let _recipients: Array<Recipient> = [];
-      recipients.forEach(recipient => {
-        _recipients.push({
-          address: recipient
-        });
+      let result = await this.client.messages().send({
+        to: recipients.join(','),
+        ...mail.getContent(),
+        attachment: mail.getAttachments(this.client),
+        inline: mail.getInlineImages(this.client)
       });
-      let result = await this.client.transmissions.send({
-        content: mail.getContent(),
-        recipients: _recipients
-      });
-      if (result.results) {
-        return Promise.resolve(result.results);
-      }
-      return Promise.reject(new Error("No results"));
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-
-  public async getEvents(transmissionId: string): Promise<Sparkpost.MessageEvent[]> {
-    try {
-      let data = await this.client.messageEvents.search({
-        transmission_ids: transmissionId
-      });
-      if (data && data.results) {
-        return Promise.resolve(data.results);
-      }
-      return Promise.reject(new Error("No results"));
+      return result;
     } catch (e) {
       return Promise.reject(e);
     }

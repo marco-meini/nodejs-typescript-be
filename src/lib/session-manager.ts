@@ -1,8 +1,8 @@
 import * as jwt from "jsonwebtoken";
 import { v1 } from "uuid";
-import * as _ from "lodash";
+import _ from "lodash";
 import { MongoClienManager } from "./mongo-client-manager";
-import * as moment from 'moment';
+import moment from 'moment';
 import { ObjectId } from "mongodb";
 
 export interface SessionPayload {

@@ -1,10 +1,9 @@
 import * as express from "express";
-import { NextFunction } from "express";
-import { Router, Request, Response } from "express-serve-static-core";
+import { NextFunction, Router, Request, Response } from "express";
 import * as Sequelize from "sequelize";
 import * as SequelizeButler from "sequelize-butler";
-import * as _ from "lodash";
-import * as moment from "moment";
+import _ from "lodash";
+import moment from "moment";
 import { Environment } from "../environment";
 import { SessionRequest } from "../middlewares/session-middleware";
 import { Mailer } from "../lib/mail-manager";
@@ -39,10 +38,8 @@ interface PasswordReset {
 export class AuthController {
   public router: Router;
   public root: string;
-  private mailer: Mailer;
 
   constructor(private env: Environment) {
-    this.mailer = new Mailer(this.env.config.sparkpost.api);
     this.router = express.Router();
     this.root = "auth";
     this.router.post("/login", async (request, response, next) => this.login(request, response, next));
@@ -121,7 +118,7 @@ export class AuthController {
             // generate the new password
             let newPassword = await user.generateNewPassword(t);
             // send the new password by email
-            await user.sendPasswordRecoveryEmail(newPassword, this.env.config.sparkpost.api);
+            await user.sendPasswordRecoveryEmail(newPassword, this.env.mailer);
             await t.commit();
             response.send();
           } else {

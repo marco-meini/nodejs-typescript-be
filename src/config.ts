@@ -8,13 +8,14 @@ export interface DbConfig {
   options: Sequelize.Options;
 }
 
-export interface Sparkpost {
-  api: string;
-}
-
 export interface SessionExpiration {
   short: number;
   long: number;
+}
+
+export interface MailerOptions {
+  apiKey: string;
+  domain: string;
 }
 
 export interface Config {
@@ -27,7 +28,7 @@ export interface Config {
   sessionExpiration: SessionExpiration;
   // api properties
   apiRoot: string;
-  sparkpost: Sparkpost;
+  mailerOptions: MailerOptions;
   // file server properties
   fileServerRootPath: string;
   fileServerPrivateFolder: string;

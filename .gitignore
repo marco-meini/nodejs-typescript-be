@@ -57,6 +57,8 @@ typings/
 # dotenv environment variables file
 .env
 
+package-lock.json
+
 # configurations
 config/config.json
 config/fe-config.json

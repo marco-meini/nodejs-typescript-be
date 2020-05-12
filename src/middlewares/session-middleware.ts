@@ -1,7 +1,6 @@
 import * as express from "express";
-import { NextFunction } from "express";
-import { Request, Response } from "express-serve-static-core";
-import * as moment from "moment";
+import { NextFunction, Request, Response } from "express";
+import moment from "moment";
 import { SessionManager, SessionPayload } from "../lib/session-manager";
 import { HttpResponseStatus } from "../enums";
 import { MongoClienManager } from "../lib/mongo-client-manager";
@@ -26,7 +25,7 @@ export enum TokenSources {
 
 export class SessionMiddleware {
   public sessionManager: SessionManager;
-  constructor(private sessionCookieName: string, private sessionHeaderName: string, mongoDbMan: MongoClienManager, sessionExpiration: { short: number; long: number }) {
+  constructor(private sessionCookieName: string, private sessionHeaderName: string, mongoDbMan: MongoClienManager, sessionExpiration: { short: number; long: number; }) {
     this.sessionManager = new SessionManager(mongoDbMan, sessionExpiration);
   }
 

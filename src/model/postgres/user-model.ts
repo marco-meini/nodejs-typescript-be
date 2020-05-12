@@ -1,5 +1,5 @@
 import { Model, Sequelize, INTEGER, STRING, Transaction } from "sequelize";
-import * as _ from "lodash";
+import _ from "lodash";
 import * as randomstring from "randomstring";
 import * as path from "path";
 import * as handlebars from "handlebars";
@@ -107,7 +107,7 @@ export class UserModel extends Model {
     }
   }
 
-  async sendPasswordRecoveryEmail(password: string, sparkpostApi: string): Promise<void> {
+  async sendPasswordRecoveryEmail(password: string, mailer: Mailer): Promise<void> {
     try {
       let templatePath: string = path.join(__dirname, "../../../templates", "password_recovery.html");
       let file = fs.readFileSync(templatePath, { encoding: "utf8" });
@@ -117,13 +117,8 @@ export class UserModel extends Model {
         password: password
       });
       let mail = new Mail("marco@marcomeini.it", "Reset password", html);
-      let mailer = new Mailer(sparkpostApi);
-      let result = await mailer.send(mail, [this.us_email]);
-      if (result.total_accepted_recipients === 1) {
-        Promise.resolve();
-      } else {
-        Promise.reject(new Error("Email recipient rejected"));
-      }
+      await mailer.send(mail, [this.us_email]);
+      Promise.resolve();
     } catch (e) {
       return Promise.reject(e);
     }

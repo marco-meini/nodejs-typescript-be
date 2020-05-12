@@ -4,6 +4,7 @@ import { SessionMiddleware } from "./middlewares/session-middleware";
 import { Logger } from "./lib/logger";
 import { MongoClienManager } from "./lib/mongo-client-manager";
 import { initPostgresModels } from "./model/postgres/init";
+import { Mailer } from "./lib/mail-manager";
 
 export class Environment {
   public config: Config;
@@ -11,6 +12,7 @@ export class Environment {
   public logger: Logger;
   public session: SessionMiddleware;
   public mongoClient: MongoClienManager;
+  public mailer: Mailer;
 
   constructor() {
     this.config = require("../config/config.json");
@@ -20,5 +22,6 @@ export class Environment {
     this.mongoClient = new MongoClienManager(this.config.mongoDb);
     initPostgresModels(this.connection);
     this.session = new SessionMiddleware(this.config.sessionCookieName, this.config.sessionHeaderName, this.mongoClient, this.config.sessionExpiration);
+    this.mailer = new Mailer(this.config.mailerOptions);
   }
 }

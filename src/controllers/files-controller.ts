@@ -1,7 +1,6 @@
 import * as express from "express";
-import { NextFunction } from "express";
+import { NextFunction, Router, Request, Response } from "express";
 import { Environment } from "../environment";
-import { Router, Request, Response } from "express-serve-static-core";
 import { SessionRequest } from "../middlewares/session-middleware";
 import * as path from "path";
 import * as mime from "mime-types";
