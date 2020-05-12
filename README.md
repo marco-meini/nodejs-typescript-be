@@ -42,10 +42,10 @@ In *config*, create a `config.json` and fill with your parameters:
   "fileServerRootPath": "/path/to/files",
   "fileServerPrivateFolder": "private",
   "fileServerPublicFolder": "public",
-  "sparkpost": {
-    "api": "sparkpost-api"
-  },
-  "jwtExpiration": 86400
+  "mailerOptions": {
+    "apiKey": "mailgun-api",
+    "domain": "domain"
+  }
 }
 ```
 #### DATABASE
