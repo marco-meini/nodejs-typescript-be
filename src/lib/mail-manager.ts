@@ -1,5 +1,3 @@
-import * as mailgun from "mailgun-js";
-import { Mailgun } from "mailgun-js";
 import * as mime from "mime-types";
 import * as fs from "fs";
 import * as path from "path";
@@ -49,14 +47,6 @@ export class Mail {
     });
   }
 
-  public getAttachments(mailgun: Mailgun) {
-    return this.attachments.map(item => new mailgun.Attachment(item));
-  }
-
-  public getInlineImages(mailgun: Mailgun) {
-    return this.inlineImages.map(item => new mailgun.Attachment(item));
-  }
-
   public getContent() {
     return this.content;
   }
@@ -71,12 +61,8 @@ export interface SendResult {
 }
 
 export class Mailer {
-  private client: Mailgun;
-  constructor(options: { apiKey: string, domain: string}) {
-    this.client = new mailgun({
-      apiKey: options.apiKey,
-      domain: options.domain
-    });
+  constructor(options: {}) {
+
   }
 
   public async send(
@@ -84,13 +70,7 @@ export class Mailer {
     recipients: Array<string>
   ): Promise<{ id: string; message: string; }> {
     try {
-      let result = await this.client.messages().send({
-        to: recipients.join(','),
-        ...mail.getContent(),
-        attachment: mail.getAttachments(this.client),
-        inline: mail.getInlineImages(this.client)
-      });
-      return result;
+      return Promise.reject("Send mail to Be implemented");
     } catch (e) {
       return Promise.reject(e);
     }

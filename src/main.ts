@@ -17,7 +17,7 @@ if (process.argv.length > 2) {
   });
 })();
 
-process.on("beforeExit", () => {
-  app.env.connection.close();
+process.on("beforeExit", async () => {
+  await app.env.pgConnection.disconnect();
   app.env.mongoClient.disconnect();
 });

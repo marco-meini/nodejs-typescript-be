@@ -1,4 +1,4 @@
-import {} from "jest";
+import { } from "jest";
 import { expect, should } from "chai";
 import { App } from "../src/app";
 import * as supertest from "supertest";
@@ -6,21 +6,21 @@ import * as path from "path";
 import * as cookie from "cookie";
 import { Constants } from "./constants";
 import { Crypt } from "../src/lib/crypt";
-import { UserModel } from "../src/model/postgres/user-model";
+import { IUser } from "../src/model/postgres/users";
 
 const app = new App();
 const request = supertest.agent(app.express);
 const apiRootPath = path.join(app.env.config.apiRoot, "auth");
 let token: string = null;
-let user: UserModel;
+let user: IUser;
 
 describe("Auth", () => {
   let userId = null;
-  beforeAll(async (done: { (arg0: any): void; (): void; (arg0: any): void }) => {
+  beforeAll(async (done: { (arg0: any): void; (): void; (arg0: any): void; }) => {
     try {
       await app.env.mongoClient.connect();
       let hash = await Crypt.hash(Constants.password);
-      user = await UserModel.create({
+      user = await app.env.pgModels.users.create({
         us_name: "Marco",
         us_surname: "Meini",
         us_password: hash,
@@ -32,10 +32,10 @@ describe("Auth", () => {
     }
   });
 
-  afterAll(async (done: { (): void; (arg0: any): void }) => {
+  afterAll(async (done: { (): void; (arg0: any): void; }) => {
     try {
-      await user.destroy();
-      app.env.connection.close();
+      await app.env.pgModels.users.deleteById(user.us_id);
+      await app.env.pgConnection.disconnect();
       app.env.mongoClient.disconnect();
       done();
     } catch (e) {
@@ -43,7 +43,7 @@ describe("Auth", () => {
     }
   });
 
-  test("Wrong login", async (done: { (): void; (arg0: any): void }) => {
+  test("Wrong login", async (done: { (): void; (arg0: any): void; }) => {
     try {
       await request
         .post(path.join(apiRootPath, "login"))
@@ -58,7 +58,7 @@ describe("Auth", () => {
     }
   });
 
-  test("Right login", async (done: { (): void; (arg0: any): void }) => {
+  test("Right login", async (done: { (): void; (arg0: any): void; }) => {
     try {
       let response = await request
         .post(path.join(apiRootPath, "login"))
@@ -131,7 +131,7 @@ describe("Auth", () => {
     }
   });
 
-  test("Right logout", async (done: { (): void; (arg0: any): void }) => {
+  test("Right logout", async (done: { (): void; (arg0: any): void; }) => {
     try {
       await request.post(path.join(apiRootPath, "logout")).expect(200);
       done();
@@ -140,7 +140,7 @@ describe("Auth", () => {
     }
   });
 
-  test("Logout - not authenticated", async (done: { (): void; (arg0: any): void }) => {
+  test("Logout - not authenticated", async (done: { (): void; (arg0: any): void; }) => {
     try {
       await request.post(path.join(apiRootPath, "logout")).expect(401);
       done();

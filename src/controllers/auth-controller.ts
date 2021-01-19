@@ -1,33 +1,20 @@
 import * as express from "express";
 import { NextFunction, Router, Request, Response } from "express";
-import * as Sequelize from "sequelize";
-import * as SequelizeButler from "sequelize-butler";
 import _ from "lodash";
 import moment from "moment";
 import { Environment } from "../environment";
 import { SessionRequest } from "../middlewares/session-middleware";
-import { Mailer } from "../lib/mail-manager";
 import { Crypt } from "../lib/crypt";
 import { HttpResponseStatus } from "../enums";
-import { UserAliases, UserModel } from "../model/postgres/user-model";
+import { IUser } from "../model/postgres/users";
 
 interface LoginData {
   email: string;
   password: string;
 }
 
-interface LoginOutput {
-  sid: string;
-  data: UserAliases;
-}
-
 interface RecoveryData {
   email: string;
-}
-
-interface NewPassword {
-  value: string;
-  hashed: string;
 }
 
 interface PasswordReset {
@@ -52,13 +39,9 @@ export class AuthController {
     try {
       let loginData: LoginData = request.body;
       if (loginData) {
-        let filter = new SequelizeButler.Filter(this.env.connection);
-        filter.addEqual("us_email", loginData.email, Sequelize.STRING);
-        let user: UserModel = await UserModel.findOne({
-          where: filter.getWhere()
-        });
+        let user: IUser = await this.env.pgModels.users.getUserByEmail(loginData.email);
         if (user) {
-          let authenticated = await user.checkPassword(loginData.password);
+          let authenticated = await this.env.pgModels.users.checkPassword(user, loginData.password);
           if (authenticated) {
             let token = await this.env.session.sessionManager.set({
               userId: user.us_id,
@@ -107,30 +90,26 @@ export class AuthController {
     try {
       let recoveryData: RecoveryData = request.body;
       if (recoveryData && recoveryData.email) {
-        let filter = new SequelizeButler.Filter(this.env.connection);
-        filter.addEqual("us_email", recoveryData.email, Sequelize.STRING);
-        let t = await this.env.connection.transaction();
-        try {
-          let user: UserModel = await UserModel.findOne({
-            where: filter.getWhere()
-          });
-          if (user) {
-            // generate the new password
-            let newPassword = await user.generateNewPassword(t);
-            // send the new password by email
-            await user.sendPasswordRecoveryEmail(newPassword, this.env.mailer);
-            await t.commit();
-            response.send();
-          } else {
-            response.sendStatus(HttpResponseStatus.NOT_AUTHORIZED);
-          }
-        } catch (e) {
+        let user = await this.env.pgModels.users.getUserByEmail(recoveryData.email);
+        if (user) {
+          let t = await this.env.pgConnection.startTransaction();
           try {
-            await t.rollback();
+            // generate the new password
+            let newPassword = await this.env.pgModels.users.generateNewPassword(user, t);
+            // send the new password by email
+            await this.env.pgModels.users.sendPasswordRecoveryEmail(user, newPassword, this.env.mailer);
+            await this.env.pgConnection.commit(t);
+            response.send();
           } catch (e) {
-            this.env.logger.error(e);
+            try {
+              await this.env.pgConnection.rollback(t);
+            } catch (e) {
+              this.env.logger.error(e);
+            }
+            next(e);
           }
-          next(e);
+        } else {
+          response.sendStatus(HttpResponseStatus.NOT_AUTHORIZED);
         }
       } else {
         response.sendStatus(HttpResponseStatus.MISSING_PARAMS);
@@ -144,12 +123,11 @@ export class AuthController {
     try {
       let passwordResetData: PasswordReset = request.body;
       if (passwordResetData && passwordResetData.newPassword && passwordResetData.oldPassword) {
-        let user: UserModel = await UserModel.findByPk(request.session.userId);
-        let valid = await user.checkPassword(passwordResetData.oldPassword);
+        let user = await this.env.pgModels.users.getUserById(request.session.userId);
+        let valid = await this.env.pgModels.users.checkPassword(user, passwordResetData.oldPassword);
         if (valid) {
           let hash = await Crypt.hash(passwordResetData.newPassword);
-          user.us_password = hash;
-          await user.save({ fields: ["us_password"] });
+          await this.env.pgModels.users.updatePassword(user, hash);
           response.send();
         } else {
           response.sendStatus(HttpResponseStatus.NOT_AUTHORIZED);

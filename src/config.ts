@@ -1,12 +1,5 @@
-import * as Sequelize from "sequelize";
+import { PoolConfig } from "pg";
 import { MongoDbConfig } from "./lib/mongo-client-manager";
-
-export interface DbConfig {
-  database: string;
-  user: string;
-  password: string;
-  options: Sequelize.Options;
-}
 
 export interface SessionExpiration {
   short: number;
@@ -20,7 +13,7 @@ export interface MailerOptions {
 
 export interface Config {
   // common properties
-  db: DbConfig;
+  db: PoolConfig;
   mongoDb: MongoDbConfig;
   sessionCookieName: string;
   sessionHeaderName: string;
