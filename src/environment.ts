@@ -18,7 +18,7 @@ export class Environment {
   constructor() {
     this.config = require("../config/config.json");
     this.logger = new Logger(this.config.logLevel);
-    this.pgConnection = new PgConnection(this.config.db, this.logger.sql.bind(this.logger));
+    this.pgConnection = new PgConnection(this.config.db, this.logger.sql);
     this.pgModels = new PgModels(this.pgConnection);
     this.mongoClient = new MongoClienManager(this.config.mongoDb);
     this.session = new SessionMiddleware(this.config.sessionCookieName, this.config.sessionHeaderName, this.mongoClient, this.config.sessionExpiration);

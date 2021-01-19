@@ -1,7 +1,7 @@
 import * as express from "express";
 import { NextFunction, Router, Request, Response } from "express";
-import _ from "lodash";
-import moment from "moment";
+import * as _ from "lodash";
+import * as moment from "moment";
 import { Environment } from "../environment";
 import { SessionRequest } from "../middlewares/session-middleware";
 import { Crypt } from "../lib/crypt";
@@ -44,10 +44,9 @@ export class AuthController {
           let authenticated = await this.env.pgModels.users.checkPassword(user, loginData.password);
           if (authenticated) {
             let token = await this.env.session.sessionManager.set({
-              userId: user.us_id,
-              name: user.us_name,
-              surname: user.us_surname,
-              email: user.us_email,
+              userId: user.id_us,
+              fullname: user.fullname_us,
+              email: user.email_us,
               persistent: true,
               grants: [] // TODO
             });

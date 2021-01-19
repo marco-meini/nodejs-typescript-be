@@ -1,5 +1,4 @@
-import { } from "jest";
-import { expect, should } from "chai";
+import { expect } from "chai";
 import { App } from "../src/app";
 import * as supertest from "supertest";
 import * as path from "path";
@@ -15,16 +14,14 @@ let token: string = null;
 let user: IUser;
 
 describe("Auth", () => {
-  let userId = null;
-  beforeAll(async (done: { (arg0: any): void; (): void; (arg0: any): void; }) => {
+  beforeAll(async done => {
     try {
       await app.env.mongoClient.connect();
       let hash = await Crypt.hash(Constants.password);
       user = await app.env.pgModels.users.create({
-        us_name: "Marco",
-        us_surname: "Meini",
-        us_password: hash,
-        us_email: Constants.email
+        fullname_us: "Marco Meini",
+        password_us: hash,
+        email_us: Constants.email
       });
       done();
     } catch (e) {
@@ -32,9 +29,9 @@ describe("Auth", () => {
     }
   });
 
-  afterAll(async (done: { (): void; (arg0: any): void; }) => {
+  afterAll(async done => {
     try {
-      await app.env.pgModels.users.deleteById(user.us_id);
+      await app.env.pgModels.users.deleteById(user.id_us);
       await app.env.pgConnection.disconnect();
       app.env.mongoClient.disconnect();
       done();
@@ -43,106 +40,68 @@ describe("Auth", () => {
     }
   });
 
-  test("Wrong login", async (done: { (): void; (arg0: any): void; }) => {
+  test("Login", async done => {
     try {
-      await request
+      let wrongLoginResponse = await request
         .post(path.join(apiRootPath, "login"))
         .send({
           email: "abcd",
           password: "defg"
-        })
-        .expect(401);
-      done();
-    } catch (e) {
-      done(e);
-    }
-  });
-
-  test("Right login", async (done: { (): void; (arg0: any): void; }) => {
-    try {
-      let response = await request
+        });
+      expect(wrongLoginResponse.status).to.be.equal(401);
+      let responseOk = await request
         .post(path.join(apiRootPath, "login"))
         .send({
           email: Constants.email,
           password: Constants.password
-        })
-        .expect(200);
-      expect(response).not.be.undefined;
-      expect(response.header).not.be.undefined;
-      expect(response.header).not.be.null;
-      token = cookie.parse(response.header["set-cookie"][0])[app.env.config.sessionCookieName];
+        });
+      expect(responseOk.status).to.be.equal(200);
+      expect(responseOk.header).not.be.undefined;
+      expect(responseOk.header).not.be.null;
+      token = cookie.parse(responseOk.header["set-cookie"][0])[app.env.config.sessionCookieName];
       done();
     } catch (e) {
       done(e);
     }
   });
 
-  test("Wrong password reset - missing parameters", async done => {
+  test("Password reset", async done => {
     try {
-      await request.post(path.join(apiRootPath, "password_reset")).expect(400);
-      done();
-    } catch (e) {
-      done(e);
-    }
-  });
-
-  test("Wrong password reset - wrong old password", async done => {
-    try {
-      await request
+      let badParamsResponse = await request.post(path.join(apiRootPath, "password_reset"));
+      expect(badParamsResponse.status).to.be.equal(400);
+      let unauthorizedResponse = await request
         .post(path.join(apiRootPath, "password_reset"))
         .send({
           newPassword: "a",
           oldPassword: "b"
-        })
-        .expect(403);
-      done();
-    } catch (e) {
-      done(e);
-    }
-  });
-
-  test("Right password reset", async done => {
-    try {
-      await request
+        });
+      expect(unauthorizedResponse.status).to.be.equal(403);
+      let responseOk = await request
         .post(path.join(apiRootPath, "password_reset"))
         .send({
           newPassword: "abcd",
           oldPassword: Constants.password
-        })
-        .expect(200);
-      done();
-    } catch (e) {
-      done(e);
-    }
-  });
-
-  test("Right password reset to previous", async done => {
-    try {
-      await request
+        });
+      expect(responseOk.status).to.be.equal(200);
+      let responseOk_2 = await request
         .post(path.join(apiRootPath, "password_reset"))
         .send({
           newPassword: Constants.password,
           oldPassword: "abcd"
-        })
-        .expect(200);
+        });
+      expect(responseOk_2.status).to.be.equal(200);
       done();
     } catch (e) {
       done(e);
     }
   });
 
-  test("Right logout", async (done: { (): void; (arg0: any): void; }) => {
+  test("Logout", async done => {
     try {
-      await request.post(path.join(apiRootPath, "logout")).expect(200);
-      done();
-    } catch (e) {
-      done(e);
-    }
-  });
-
-  test("Logout - not authenticated", async (done: { (): void; (arg0: any): void; }) => {
-    try {
-      await request.post(path.join(apiRootPath, "logout")).expect(401);
+      let responseOk = await request.post(path.join(apiRootPath, "logout"));
+      expect(responseOk.status).to.be.equal(200);
+      let notAuthenticatedResponse = await request.post(path.join(apiRootPath, "logout"));
+      expect(notAuthenticatedResponse.status).to.be.equal(401);
       done();
     } catch (e) {
       done(e);
@@ -164,16 +123,19 @@ describe("Auth", () => {
     }
   });
 
-  test("Wrong password recovery", () => {
-    return request.post(path.join(apiRootPath, "password_recovery")).expect(400);
-  });
-
-  test.skip("Right password recovery", () => {
-    return request
-      .post(path.join(apiRootPath, "password_recovery"))
-      .send({
-        email: "m.meini@ambrogio.com"
-      })
-      .expect(200);
+  test.skip("Password recovery", async done => {
+    try {
+      await request.post(path.join(apiRootPath, "password_recovery")).expect(400);
+      await request
+        .post(path.join(apiRootPath, "password_recovery"))
+        .send({
+          email: "m.meini@ambrogio.com"
+        })
+        .expect(200);
+      done();
+    }
+    catch (e) {
+      done(e);
+    }
   });
 });

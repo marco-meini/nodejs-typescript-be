@@ -31,9 +31,6 @@ export class App {
       if (!error) {
         next();
       } else {
-        if (error.name && (error.name === "SequelizeValidationError" || error.name === "SequelizeUniqueConstraintError")) {
-          error.status = HttpResponseStatus.MISSING_PARAMS;
-        }
         if (error.status && error.status !== HttpResponseStatus.SERVER_ERROR) {
           if (error.errors && error.errors.length) {
             let data = error.errors.map((item: any) => {
@@ -44,6 +41,7 @@ export class App {
             response.sendStatus(error.status);
           }
         } else {
+          console.error(error);
           this.env.logger.error(request.url, error.stack);
           response.sendStatus(HttpResponseStatus.SERVER_ERROR);
         }

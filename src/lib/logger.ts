@@ -1,5 +1,5 @@
-import moment from 'moment';
-import chalk from 'chalk';
+import * as moment from "moment";
+import * as chalk from 'chalk';
 
 export enum LogLevel {
   ERRORS = 1,

@@ -1,6 +1,6 @@
 import * as express from "express";
 import { NextFunction, Request, Response } from "express";
-import moment from "moment";
+import * as moment from "moment";
 import { SessionManager, SessionPayload } from "../lib/session-manager";
 import { HttpResponseStatus } from "../enums";
 import { MongoClienManager } from "../lib/mongo-client-manager";

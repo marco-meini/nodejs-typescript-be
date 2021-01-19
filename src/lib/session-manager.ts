@@ -1,14 +1,13 @@
 import * as jwt from "jsonwebtoken";
 import { v1 } from "uuid";
-import _ from "lodash";
+import * as _ from "lodash";
 import { MongoClienManager } from "./mongo-client-manager";
-import moment from 'moment';
+import * as moment from "moment";
 import { ObjectId } from "mongodb";
 
 export interface SessionPayload {
   userId: number;
-  name: string;
-  surname: string;
+  fullname: string;
   email: string;
   grants?: Array<number>;
   persistent: boolean;
@@ -214,8 +213,7 @@ export class SessionManager {
               $set: {
                 newPayload: {
                   userId: payload.userId,
-                  name: payload.name,
-                  surname: payload.surname,
+                  fullname: payload.fullname,
                   email: payload.email,
                   grants: grants,
                   persistent: payload.persistent

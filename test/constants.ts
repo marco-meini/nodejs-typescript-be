@@ -5,10 +5,10 @@ export enum Constants {
   email = 'marco@marcomeini.it'
 }
 
-declare global {
-  const describe;
-  const it;
-  const test;
-  const afterAll;
-  const beforeAll;
-}
+// declare global {
+//   const describe;
+//   const it;
+//   const test;
+//   const afterAll;
+//   const beforeAll;
+// }
