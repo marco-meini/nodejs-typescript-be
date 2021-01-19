@@ -5,7 +5,8 @@ Nodejs + Express typescript backend template
 ## Configuration
 
 ### Environment configuration:
-In *config*, create a `config.json` and fill with your parameters:
+
+In _config_, create a `config.json` and fill with your parameters:
 
 ```json
 {
@@ -14,14 +15,7 @@ In *config*, create a `config.json` and fill with your parameters:
     "database": "MyDatabaseName",
     "user": "DatabaseUser",
     "password": "DatabaseUserPassword",
-    "options": {
-      "host": "MyDatabaseHost",
-      "dialect": "postgres",
-      "pool": {
-        "max": 20
-      },
-      "operatorsAliases": false
-    }
+    "host": "MyDatabaseHost"
   },
   "mongoDb": {
     "host": "[ip-address]",
@@ -48,22 +42,19 @@ In *config*, create a `config.json` and fill with your parameters:
   }
 }
 ```
-#### DATABASE
-
-This project use Sequelize, so _db_ configurations must be compiled according to the library's requirements.
 
 #### LOG
 
 _logLevel_ possible values:
 
-* Only errors => 1
-* Errors + Warnings => 2
-* Errors + Warnings + Info => 3
-* Errors + Warnings + Info + Sql => 4
+- Only errors => 1
+- Errors + Warnings => 2
+- Errors + Warnings + Info => 3
+- Errors + Warnings + Info + Sql => 4
 
 #### SESSION
 
 Using JWT session it's necessary to install mongoDb to manage a whitelist, only in this case it's also necessary to complie this configurations:
 
-* sessionExpiration: tokens expirations in seconds
-* redisOptions: redis connection configurations
+- sessionExpiration: tokens expirations in seconds
+- mongoDb: mongo connection configurations
