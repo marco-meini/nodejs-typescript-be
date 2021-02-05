@@ -61,12 +61,13 @@ export interface SendResult {
 }
 
 export class Mailer {
-  constructor(options: {}) {
-
-  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
+  constructor(options: unknown) { }
 
   public async send(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     mail: Mail,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     recipients: Array<string>
   ): Promise<{ id: string; message: string; }> {
     try {

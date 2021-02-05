@@ -6,13 +6,9 @@ import * as path from "path";
 import { Environment } from "./environment";
 import { AuthController } from "./controllers/auth-controller";
 import * as bodyParser from "body-parser";
-import { HttpResponseStatus } from "./enums";
+import { HttpResponseStatus } from "./enums-interfaces";
 import { FilesController } from "./controllers/files-controller";
-
-class ExpressError extends Error {
-  status: number;
-  errors?: any;
-}
+import { UsersController } from "./controllers/users-controller";
 
 export class App {
   public express: Express;
@@ -25,26 +21,17 @@ export class App {
     this.express.use(bodyParser.json());
     const auth = new AuthController(this.env);
     const files = new FilesController(this.env);
+    const users = new UsersController(this.env);
     this.express.use(path.join(this.env.config.apiRoot, auth.root), auth.router);
     this.express.use(path.join(this.env.config.apiRoot, files.root), files.router);
-    this.express.use((error: ExpressError, request: Request, response: Response, next: NextFunction) => {
+    this.express.use(path.join(this.env.config.apiRoot, users.root), users.router);
+    this.express.use((error: Error, request: Request, response: Response, next: NextFunction) => {
       if (!error) {
         next();
       } else {
-        if (error.status && error.status !== HttpResponseStatus.SERVER_ERROR) {
-          if (error.errors && error.errors.length) {
-            let data = error.errors.map((item: any) => {
-              return item.message;
-            });
-            response.status(error.status).send(data);
-          } else {
-            response.sendStatus(error.status);
-          }
-        } else {
-          console.error(error);
-          this.env.logger.error(request.url, error.stack);
-          response.sendStatus(HttpResponseStatus.SERVER_ERROR);
-        }
+        console.error(error);
+        this.env.logger.error(request.url, error.stack);
+        response.sendStatus(HttpResponseStatus.SERVER_ERROR);
       }
     });
   }

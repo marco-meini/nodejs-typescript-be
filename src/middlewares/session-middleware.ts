@@ -2,7 +2,7 @@ import * as express from "express";
 import { NextFunction, Request, Response } from "express";
 import * as moment from "moment";
 import { SessionManager, SessionPayload } from "../lib/session-manager";
-import { HttpResponseStatus } from "../enums";
+import { HttpResponseStatus } from "../enums-interfaces";
 import { MongoClienManager } from "../lib/mongo-client-manager";
 
 declare global {
@@ -100,7 +100,7 @@ export class SessionMiddleware {
               this.updateResponseToken(request, response, newToken, sessionData.persistent);
             }
           }
-          if (sessionData!.grants.indexOf(permission) < 0) {
+          if (sessionData.grants.indexOf(permission) < 0) {
             response.sendStatus(HttpResponseStatus.NOT_AUTHORIZED);
           } else {
             request.session = sessionData;
@@ -130,9 +130,9 @@ export class SessionMiddleware {
             this.updateResponseToken(request, response, newToken, sessionData.persistent);
           }
         }
-        let authorized: boolean = false;
+        let authorized = false;
         permissions.forEach(permission => {
-          if (sessionData!.grants.indexOf(permission) >= 0) {
+          if (sessionData.grants.indexOf(permission) >= 0) {
             authorized = true;
             return;
           }

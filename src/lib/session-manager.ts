@@ -202,7 +202,7 @@ export class SessionManager {
   public async updateUserGrants(userId: number, grants: Array<string>): Promise<void> {
     try {
       let sessionCollection = this.dbMan.db.collection(this.collectionName);
-      let result = await sessionCollection.find({ userId: userId });
+      let result = sessionCollection.find({ userId: userId });
       let sessions = (await result.toArray()) as ISession[];
       for (let session of sessions) {
         let payload: SessionPayload = <SessionPayload>jwt.decode(session.jwt);

@@ -7,3 +7,9 @@ export enum HttpResponseStatus {
   CONFLICT = 409,
   SERVER_ERROR = 500
 }
+
+export interface Result {
+  success: boolean;
+  message: string;
+  subMessages?: Array<string>;
+}

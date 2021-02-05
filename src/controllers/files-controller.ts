@@ -1,5 +1,5 @@
 import * as express from "express";
-import { NextFunction, Router, Request, Response } from "express";
+import { Router, Request, Response } from "express";
 import { Environment } from "../environment";
 import { SessionRequest } from "../middlewares/session-middleware";
 import * as path from "path";
@@ -12,11 +12,11 @@ export class FilesController {
   constructor(private env: Environment) {
     this.router = express.Router();
     this.root = "files";
-    this.router.get("/private/:name", this.env.session.checkAuthentication(), (request: SessionRequest, response, next) => this.getPrivateFile(request, response, next));
-    this.router.get("/public/:name", (request: Request, response, next) => this.getPublicFile(request, response, next));
+    this.router.get("/private/:name", this.env.session.checkAuthentication(), (request: SessionRequest, response) => this.getPrivateFile(request, response));
+    this.router.get("/public/:name", (request: Request, response) => this.getPublicFile(request, response));
   }
 
-  public getPrivateFile(request: SessionRequest, response: Response, next: NextFunction) {
+  public getPrivateFile(request: SessionRequest, response: Response) {
     response.sendFile(path.join(this.env.config.fileServerRootPath, this.env.config.fileServerPrivateFolder, path.basename(request.params.name, path.extname(request.params.name))), {
       headers: {
         "Content-Type": mime.lookup(request.params.name).toString()
@@ -24,7 +24,7 @@ export class FilesController {
     });
   }
 
-  public getPublicFile(request: Request, response: Response, next: NextFunction) {
+  public getPublicFile(request: Request, response: Response) {
     response.sendFile(path.join(this.env.config.fileServerRootPath, this.env.config.fileServerPublicFolder, path.basename(request.params.name, path.extname(request.params.name))), {
       headers: {
         "Content-Type": mime.lookup(request.params.name).toString()

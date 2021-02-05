@@ -8,17 +8,6 @@ import { Crypt } from "../../lib/crypt";
 import { Mail, Mailer } from "../../lib/mail-manager";
 import { PgConnection } from "../../lib/pg-connection";
 
-/**
- * USERS TABLE
- CREATE TABLE IF NOT EXISTS users_us (
-    id_us serial NOT NULL,
-    fullname_us character varying NOT NULL,
-    email_us character varying NOT NULL,
-    password_us character varying NOT NULL,
-    PRIMARY KEY(id_us)
- );
- */
-
 export interface IUser {
   id_us?: number;
   fullname_us: string;
@@ -56,7 +45,7 @@ export class Users {
     catch (e) {
       return Promise.reject(e);
     }
-  };
+  }
 
   async updatePassword(user: IUser, hash: string, transactionClient?: PoolClient): Promise<void> {
     try {
@@ -94,7 +83,7 @@ export class Users {
     catch (e) {
       return Promise.reject(e);
     }
-  };
+  }
 
 
   /**
@@ -142,6 +131,20 @@ export class Users {
       await mailer.send(mail, [user.email_us]);
       Promise.resolve();
     } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  async updateUser(user: IUser) {
+    try {
+      let sql = `update ${this.tableName} 
+      set fullname_us=$1
+      , email_us=$2
+      where id_us=$3`;
+      await this.connection.query({ sql: sql, replacements: [user.fullname_us, user.email_us, user.id_us] });
+      return Promise.resolve();
+    }
+    catch (e) {
       return Promise.reject(e);
     }
   }

@@ -1,11 +1,10 @@
 import * as express from "express";
 import { NextFunction, Router, Request, Response } from "express";
-import * as _ from "lodash";
 import * as moment from "moment";
 import { Environment } from "../environment";
 import { SessionRequest } from "../middlewares/session-middleware";
 import { Crypt } from "../lib/crypt";
-import { HttpResponseStatus } from "../enums";
+import { HttpResponseStatus } from "../enums-interfaces";
 import { IUser } from "../model/postgres/users";
 
 interface LoginData {
@@ -32,7 +31,7 @@ export class AuthController {
     this.router.post("/login", async (request, response, next) => this.login(request, response, next));
     this.router.post("/logout", this.env.session.checkAuthentication(), (request: SessionRequest, response, next) => this.logout(request, response, next));
     this.router.post("/password_recovery", (request, response, next) => this.passwordRecovery(request, response, next));
-    this.router.post("/password_reset", this.env.session.checkAuthentication(), (request: SessionRequest, response, next) => this.passwordReset(request, response, next));
+    this.router.patch("/password_reset", this.env.session.checkAuthentication(), (request: SessionRequest, response, next) => this.passwordReset(request, response, next));
   }
 
   private async login(request: Request, response: Response, next: NextFunction) {

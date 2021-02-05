@@ -2,17 +2,17 @@ import { Pool, PoolClient, PoolConfig } from "pg";
 
 export interface QueryOptions {
   sql: string;
-  replacements?: Array<any>;
+  replacements?: Array<unknown>;
   transactionClient?: PoolClient;
 }
 
 export class PgConnection {
   private pool: Pool;
 
-  constructor(config: PoolConfig, private logger?: (...messages: any[]) => void) {
+  constructor(config: PoolConfig, private logger?: (...messages: unknown[]) => void) {
     if (logger) config.log = this.logger;
     this.pool = new Pool(config);
-  };
+  }
 
   async startTransaction(): Promise<PoolClient> {
     let transactionClient: PoolClient;
